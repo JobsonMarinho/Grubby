@@ -19,12 +19,36 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
             match(GrubbyTokenType.PRINTLN) -> parsePrintln()
             match(GrubbyTokenType.VAR) -> parseVarDeclaration(mutable = true)
             match(GrubbyTokenType.VAL) -> parseVarDeclaration(mutable = false)
+            match(GrubbyTokenType.LATER) -> parseLaterDeclaration()
+            match(GrubbyTokenType.IDENTIFIER) -> parseAssignmentOrExpression()
             match(GrubbyTokenType.FN) -> parseFunction()
             match(GrubbyTokenType.FOR) -> parseFor()
             match(GrubbyTokenType.FOREACH) -> parseForeach()
             match(GrubbyTokenType.WHILE) -> parseWhile()
             else -> parseExpression()
         }
+    }
+
+    private fun parseLaterDeclaration(): GrubbyNode {
+        consume(GrubbyTokenType.LATER)
+        consume(GrubbyTokenType.VAR)
+        val name = consume(GrubbyTokenType.IDENTIFIER).value
+        var type: String? = null
+        if (match(GrubbyTokenType.OPERATOR) && peek()?.value == ":") {
+            consume(GrubbyTokenType.OPERATOR) // Consumindo ':'
+            type = consume(GrubbyTokenType.IDENTIFIER).value
+        }
+        return GrubbyLaterDeclarationNode(name, type)
+    }
+
+    private fun parseAssignmentOrExpression(): GrubbyNode {
+        val identifier = consume(GrubbyTokenType.IDENTIFIER).value
+        if (match(GrubbyTokenType.EQUALS)) {
+            consume(GrubbyTokenType.EQUALS)
+            val expression = parseExpression()
+            return GrubbyAssignmentNode(identifier, expression)
+        }
+        return GrubbyIdentifierNode(identifier)
     }
 
     private fun parseImport(): GrubbyNode {
@@ -135,6 +159,10 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
                 val expression = parseExpression()
                 consume(GrubbyTokenType.OPERATOR) // Consumindo ')'
                 expression
+            }
+            match(GrubbyTokenType.EQUALS) -> {
+                consume(GrubbyTokenType.EQUALS)  // Consumir o operador '=' corretamente
+                parseFactor()
             }
             match(GrubbyTokenType.COMMENT) -> {
                 consume(GrubbyTokenType.COMMENT) // Ignorar comentário de linha

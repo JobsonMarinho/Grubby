@@ -1,7 +1,7 @@
-// Declaração de variáveis
-var x = 10 // Variável inteira (pode ser alterada)
-val y: number = 20 // Variável constante inteira (não pode ser alterada)
+later var x: number // later is a keyword that allows you to declare a variable without initializing it
 
-println x + y
+x = 5 // x is now 5
+
+println x // prints 5
 
 

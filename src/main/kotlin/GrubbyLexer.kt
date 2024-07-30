@@ -1,14 +1,14 @@
 import java.util.regex.Pattern
 
 class GrubbyLexer {
-    private val TOKEN_PATTERN = Pattern.compile(
-        """(?<COMMENT>//[^\r\n]*)|(?<BLOCK>/\*[\s\S]*?\*/)|(?<IMPORT>import)|(?<PRINTLN>println)|(?<VAR>var)|(?<VAL>val)|(?<FN>fn)|(?<END>end)|(?<FOR>for)|(?<FOREACH>foreach)|(?<WHILE>while)|(?<IN>in)|(?<TO>to)|(?<ARRAY>\[.*?])|(?<STRING>'[^']*')|(?<NUMBER>[0-9]+)|(?<IDENTIFIER>[a-zA-Z_][a-zA-Z0-9_]*)|(?<OPERATOR>[:+\-*/=()])|(?<WHITESPACE>[ \t\f\r\n]+)""",
+    private val pattern = Pattern.compile(
+        """(?<EQUALS>=)|(?<COMMENT>//[^\r\n]*)|(?<BLOCK>/\*[\s\S]*?\*/)|(?<IMPORT>import)|(?<PRINTLN>println)|(?<VAR>var)|(?<VAL>val)|(?<LATER>later)|(?<FN>fn)|(?<END>end)|(?<FOR>for)|(?<FOREACH>foreach)|(?<WHILE>while)|(?<IN>in)|(?<TO>to)|(?<ARRAY>\[.*?])|(?<STRING>'[^']*')|(?<NUMBER>[0-9]+)|(?<IDENTIFIER>[a-zA-Z_][a-zA-Z0-9_]*)|(?<OPERATOR>[:+\-*/=()])|(?<WHITESPACE>[ \t\f\r\n]+)""",
         Pattern.DOTALL or Pattern.MULTILINE
     )
 
     fun tokenize(input: String): List<GrubbyToken> {
         val tokens = mutableListOf<GrubbyToken>()
-        val matcher = TOKEN_PATTERN.matcher(input)
+        val matcher = pattern.matcher(input)
         while (matcher.find()) {
             when {
                 matcher.group("COMMENT") != null -> {
@@ -17,10 +17,12 @@ class GrubbyLexer {
                 matcher.group("BLOCK") != null -> {
                     // Ignorar comentários de bloco
                 }
+                matcher.group("EQUALS") != null -> tokens.add(GrubbyToken(GrubbyTokenType.EQUALS, matcher.group("EQUALS")))
                 matcher.group("IMPORT") != null -> tokens.add(GrubbyToken(GrubbyTokenType.IMPORT, matcher.group("IMPORT")))
                 matcher.group("PRINTLN") != null -> tokens.add(GrubbyToken(GrubbyTokenType.PRINTLN, matcher.group("PRINTLN")))
                 matcher.group("VAR") != null -> tokens.add(GrubbyToken(GrubbyTokenType.VAR, matcher.group("VAR")))
                 matcher.group("VAL") != null -> tokens.add(GrubbyToken(GrubbyTokenType.VAL, matcher.group("VAL")))
+                matcher.group("LATER") != null -> tokens.add(GrubbyToken(GrubbyTokenType.LATER, matcher.group("LATER")))
                 matcher.group("FN") != null -> tokens.add(GrubbyToken(GrubbyTokenType.FN, matcher.group("FN")))
                 matcher.group("END") != null -> tokens.add(GrubbyToken(GrubbyTokenType.END, matcher.group("END")))
                 matcher.group("FOR") != null -> tokens.add(GrubbyToken(GrubbyTokenType.FOR, matcher.group("FOR")))

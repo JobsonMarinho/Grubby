@@ -1,6 +1,7 @@
 enum class GrubbyTokenType {
     IMPORT,
     PRINTLN,
+    LATER,
     VAR,
     VAL,
     FN,
@@ -17,4 +18,5 @@ enum class GrubbyTokenType {
     OPERATOR,
     COMMENT,
     BLOCK,
+    EQUALS
 }

@@ -4,24 +4,28 @@ import java.nio.file.Paths
 class GrubbyInterpreter {
     private val importedFiles = mutableSetOf<String>()
     private val functions = mutableMapOf<String, GrubbyFunctionNode>()
-    private val variables = mutableMapOf<String, Any>()
+    private val variables = mutableMapOf<String, Any?>()
     private val variableTypes = mutableMapOf<String, String?>()
     private val mutableVariables = mutableSetOf<String>()
+    private val laterVariables = mutableSetOf<String>()
 
-    fun evaluate(node: GrubbyNode) {
-        when (node) {
+    fun evaluate(node: GrubbyNode): Any? {
+        return when (node) {
             is GrubbyPrintlnNode -> {
                 val result = evaluateExpression(node.expression)
                 println(result)
+                null
             }
             is GrubbyImportNode -> {
                 if (!importedFiles.contains(node.identifier)) {
                     importedFiles.add(node.identifier)
                     processImport(node.identifier)
                 }
+                null
             }
             is GrubbyFunctionNode -> {
                 functions[node.name] = node
+                null
             }
             is GrubbyVarDeclarationNode -> {
                 val value = evaluateExpression(node.expression)
@@ -30,9 +34,16 @@ class GrubbyInterpreter {
                 if (node.mutable) {
                     mutableVariables.add(node.name)
                 }
+                null
+            }
+            is GrubbyLaterDeclarationNode -> {
+                laterVariables.add(node.name)
+                variableTypes[node.name] = node.type
+                null
             }
             is GrubbyBlockNode -> {
                 node.statements.forEach { evaluate(it) }
+                null
             }
             is GrubbyFunctionCallNode -> {
                 val function = functions[node.name] ?: throw RuntimeException("Unknown function: ${node.name}")
@@ -41,6 +52,7 @@ class GrubbyInterpreter {
                     localVariables[paramName] = evaluateExpression(node.arguments[index])
                 }
                 evaluateBlock(function.body, localVariables)
+                null
             }
             is GrubbyForNode -> {
                 val start = evaluateExpression(node.start) as Int
@@ -49,6 +61,7 @@ class GrubbyInterpreter {
                     variables[node.variable] = i
                     evaluateBlock(node.body, variables.toMutableMap())
                 }
+                null
             }
             is GrubbyForeachNode -> {
                 val array = evaluateExpression(node.array) as List<*>
@@ -56,17 +69,31 @@ class GrubbyInterpreter {
                     variables[node.variable] = element!!
                     evaluateBlock(node.body, variables.toMutableMap())
                 }
+                null
             }
             is GrubbyWhileNode -> {
                 while (evaluateExpression(node.condition) as Boolean) {
                     evaluateBlock(node.body, variables.toMutableMap())
                 }
+                null
+            }
+            is GrubbyIdentifierNode -> {
+                variables[node.name] ?: throw RuntimeException("Unknown identifier: ${node.name}")
+            }
+            is GrubbyAssignmentNode -> {
+                val value = evaluateExpression(node.expression)
+                if (laterVariables.contains(node.name)) {
+                    initializeLaterVariable(node.name, value)
+                } else {
+                    variables[node.name] = value
+                }
+                null
             }
             else -> throw RuntimeException("Unknown node: $node")
         }
     }
 
-    private fun evaluateExpression(node: GrubbyNode, localVariables: Map<String, Any> = variables): Any {
+    private fun evaluateExpression(node: GrubbyNode, localVariables: Map<String, Any?> = variables): Any? {
         return when (node) {
             is GrubbyNumberNode -> node.value
             is GrubbyStringNode -> {
@@ -80,7 +107,14 @@ class GrubbyInterpreter {
                 }
                 result
             }
-            is GrubbyIdentifierNode -> localVariables[node.name] ?: throw RuntimeException("Unknown identifier: ${node.name}")
+            is GrubbyIdentifierNode -> {
+                val value = localVariables[node.name] ?: if (laterVariables.contains(node.name)) {
+                    throw RuntimeException("Variable '${node.name}' declared with 'later' is not initialized.")
+                } else {
+                    throw RuntimeException("Unknown identifier: ${node.name}")
+                }
+                value
+            }
             is GrubbyBinaryOperatorNode -> {
                 val left = evaluateExpression(node.left, localVariables) as Int
                 val right = evaluateExpression(node.right, localVariables) as Int
@@ -97,7 +131,7 @@ class GrubbyInterpreter {
         }
     }
 
-    private fun evaluateBlock(block: GrubbyBlockNode, localVariables: MutableMap<String, Any>) {
+    private fun evaluateBlock(block: GrubbyBlockNode, localVariables: MutableMap<String, Any?>) {
         block.statements.forEach { statement ->
             when (statement) {
                 is GrubbyVarDeclarationNode -> {
@@ -106,6 +140,10 @@ class GrubbyInterpreter {
                     if (statement.mutable) {
                         mutableVariables.add(statement.name)
                     }
+                }
+                is GrubbyLaterDeclarationNode -> {
+                    laterVariables.add(statement.name)
+                    variableTypes[statement.name] = statement.type
                 }
                 is GrubbyPrintlnNode -> {
                     val result = evaluateExpression(statement.expression, localVariables)
@@ -142,5 +180,14 @@ class GrubbyInterpreter {
         val tokens = lexer.tokenize(expression)
         val parser = GrubbyParser(tokens)
         return parser.parse().first()
+    }
+
+    private fun initializeLaterVariable(name: String, value: Any?) {
+        if (laterVariables.contains(name)) {
+            variables[name] = value
+            laterVariables.remove(name)
+        } else {
+            throw RuntimeException("Variable '$name' was not declared with 'later'.")
+        }
     }
 }
