@@ -1,0 +1,1 @@
+data class GrubbyToken(val type: GrubbyTokenType, val value: String)
