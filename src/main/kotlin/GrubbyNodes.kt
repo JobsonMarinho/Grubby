@@ -27,5 +27,3 @@ data class GrubbyForNode(val variable: String, val start: GrubbyNode, val end: G
 data class GrubbyForeachNode(val variable: String, val array: GrubbyNode, val body: GrubbyBlockNode) : GrubbyNode()
 
 data class GrubbyWhileNode(val condition: GrubbyNode, val body: GrubbyBlockNode) : GrubbyNode()
-
-data object GrubbyCommentNode : GrubbyNode()
