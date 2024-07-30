@@ -17,7 +17,7 @@ Para começar a usar o Grubby, siga os passos abaixo para configurar o ambiente 
 1. **Clone o repositório**
 
     ```bash
-    git clone https://github.com/seu-usuario/grubby.git
+    git clone https://github.com/JobsonMarinho/grubby.git
     ```
 
 2. **Navegue até o diretório do projeto**
