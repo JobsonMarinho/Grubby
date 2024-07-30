@@ -1,0 +1,7 @@
+// Declaração de variáveis
+var x = 10 // Variável inteira (pode ser alterada)
+val y: number = 20 // Variável constante inteira (não pode ser alterada)
+
+println x + y
+
+
