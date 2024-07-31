@@ -1,5 +1,6 @@
 class GrubbyParser(private val tokens: List<GrubbyToken>) {
     private var position = 0
+    private val variableDeclarations = mutableMapOf<String, Boolean>()
 
     fun parse(): List<GrubbyNode> {
         val nodes = mutableListOf<GrubbyNode>()
@@ -50,12 +51,21 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
 
     private fun parseAssignmentOrExpression(): GrubbyNode {
         val identifier = consume(GrubbyTokenType.IDENTIFIER).value
-        return if (match(GrubbyTokenType.EQUALS)) {
+
+        // Verificar se é uma reatribuição
+        if (match(GrubbyTokenType.EQUALS)) {
+            // Verificar se a variável é imutável
+            val isMutable = variableDeclarations[identifier]
+            if (isMutable == false) {
+                throw RuntimeException("Variável imutável '$identifier' não pode ser reatribuída")
+            }
+
+            // Continuar com a reatribuição
             consume(GrubbyTokenType.EQUALS)
             val expression = parseExpression()
-            GrubbyAssignmentNode(identifier, expression)
+            return GrubbyAssignmentNode(identifier, expression)
         } else {
-            parseExpression(GrubbyIdentifierNode(identifier))
+            return parseExpression(GrubbyIdentifierNode(identifier))
         }
     }
 
@@ -72,11 +82,8 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
     }
 
     private fun parseVarDeclaration(mutable: Boolean): GrubbyNode {
-        if (mutable) {
-            consume(GrubbyTokenType.VAR)
-        } else {
-            consume(GrubbyTokenType.VAL)
-        }
+        val typeToken = if (mutable) GrubbyTokenType.VAR else GrubbyTokenType.VAL
+        consume(typeToken)
         val name = consume(GrubbyTokenType.IDENTIFIER).value
         var type: String? = null
         if (match(GrubbyTokenType.OPERATOR) && peek()?.value == ":") {
@@ -85,6 +92,7 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
         }
         consume(GrubbyTokenType.EQUALS) // Consumindo '='
         val expression = parseExpression()
+        variableDeclarations[name] = mutable
         return GrubbyVarDeclarationNode(name, expression, mutable, type)
     }
 

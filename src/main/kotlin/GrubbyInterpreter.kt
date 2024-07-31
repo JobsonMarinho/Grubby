@@ -107,6 +107,9 @@ class GrubbyInterpreter {
                 if (laterVariables.contains(node.name)) {
                     initializeLaterVariable(node.name, value)
                 } else {
+                    if (!mutableVariables.contains(node.name)) {
+                        throw RuntimeException("Variável imutável '${node.name}' não pode ser reatribuída")
+                    }
                     variables[node.name] = value
                 }
                 null
@@ -159,7 +162,6 @@ class GrubbyInterpreter {
             else -> throw RuntimeException("Unknown expression: $node")
         }
     }
-
 
     private fun evaluateBlock(block: GrubbyBlockNode, localVariables: MutableMap<String, Any?>) {
         block.statements.forEach { statement ->

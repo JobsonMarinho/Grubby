@@ -1,9 +1,0 @@
-val x = 2
-
-if x > 10 then
-  println 'x is greater than 10'
-elseif x == 2 then
-  println 'x is equal to 2'
-else
-  println 'x is less than or equal to 10'
-end
