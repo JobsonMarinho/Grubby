@@ -16,7 +16,7 @@ Obrigado por considerar contribuir para o Grubby! Suas contribuições são muit
     - **Clone o Repositório**: Clone o repositório forkado para sua máquina local.
 
       ```bash
-      git clone https://github.com/jobsonmarinho/grubby.git
+      git clone https://github.com/JobsonMarinho/Grubby.git
       ```
     - **Crie uma Branch**: Crie uma nova branch para suas alterações.
 
