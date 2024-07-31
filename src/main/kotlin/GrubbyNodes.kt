@@ -34,4 +34,6 @@ data class GrubbyAssignmentNode(val name: String, val expression: GrubbyNode) : 
 
 data class GrubbyIfElseNode(val condition: GrubbyNode, val trueBranch: GrubbyBlockNode, val elseIfBranches: List<Pair<GrubbyNode, GrubbyBlockNode>>, var falseBranch: GrubbyBlockNode?) : GrubbyNode()
 
+data class GrubbyDoubleNode(val value: Double) : GrubbyNode()
+
 data object GrubbyEndNode : GrubbyNode()

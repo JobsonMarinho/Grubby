@@ -2,10 +2,10 @@ var nome = 'Jobs'
 
 println nome
 
-nome = 1
+var inteiro = 1
 
-println nome
+println inteiro
 
-nome = 1.5
+var decimal = 1.5
 
-println nome
+println decimal

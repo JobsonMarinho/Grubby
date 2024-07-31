@@ -105,6 +105,7 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
                 is GrubbyNumberNode -> "Int"
                 is GrubbyStringNode -> "String"
                 is GrubbyArrayNode -> "Array"
+                is GrubbyDoubleNode -> "Double"
                 else -> throw RuntimeException("Tipo não reconhecido para a expressão: $expression")
             }
         }
@@ -195,6 +196,7 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
 
     private fun parseFactor(): GrubbyNode {
         return when {
+            match(GrubbyTokenType.DOUBLE) -> GrubbyDoubleNode(consume(GrubbyTokenType.DOUBLE).value.toDouble())
             match(GrubbyTokenType.NUMBER) -> GrubbyNumberNode(consume(GrubbyTokenType.NUMBER).value.toInt())
             match(GrubbyTokenType.STRING) -> GrubbyStringNode(consume(GrubbyTokenType.STRING).value.trim('\'', '"'))
             match(GrubbyTokenType.IDENTIFIER) -> {

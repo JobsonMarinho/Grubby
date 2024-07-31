@@ -138,6 +138,7 @@ class GrubbyInterpreter {
     private fun inferType(value: Any?): String {
         return when (value) {
             is Int -> "Int"
+            is Double -> "Double"
             is String -> "String"
             is List<*> -> "Array"
             else -> throw RuntimeException("Tipo não reconhecido para o valor: $value")
@@ -147,6 +148,7 @@ class GrubbyInterpreter {
     private fun evaluateExpression(node: GrubbyNode, localVariables: Map<String, Any?> = variables): Any {
         return when (node) {
             is GrubbyNumberNode -> node.value
+            is GrubbyDoubleNode -> node.value
             is GrubbyStringNode -> node.value
             is GrubbyIdentifierNode -> {
                 val value = localVariables[node.name] ?: if (laterVariables.contains(node.name)) {
@@ -157,17 +159,49 @@ class GrubbyInterpreter {
                 value
             }
             is GrubbyBinaryOperatorNode -> {
-                val left = evaluateExpression(node.left, localVariables) as Int
-                val right = evaluateExpression(node.right, localVariables) as Int
+                val left = evaluateExpression(node.left, localVariables)
+                val right = evaluateExpression(node.right, localVariables)
                 when (node.operator) {
-                    "+" -> left + right
-                    "-" -> left - right
-                    "*" -> left * right
-                    "/" -> left / right
-                    ">" -> left > right
-                    "<" -> left < right
-                    ">=" -> left >= right
-                    "<=" -> left <= right
+                    "+" -> when {
+                        left is Int && right is Int -> left + right
+                        left is Double && right is Double -> left + right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '+': $left e $right")
+                    }
+                    "-" -> when {
+                        left is Int && right is Int -> left - right
+                        left is Double && right is Double -> left - right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '-': $left e $right")
+                    }
+                    "*" -> when {
+                        left is Int && right is Int -> left * right
+                        left is Double && right is Double -> left * right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '*': $left e $right")
+                    }
+                    "/" -> when {
+                        left is Int && right is Int -> left / right
+                        left is Double && right is Double -> left / right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '/': $left e $right")
+                    }
+                    ">" -> when {
+                        left is Int && right is Int -> left > right
+                        left is Double && right is Double -> left > right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '>': $left e $right")
+                    }
+                    "<" -> when {
+                        left is Int && right is Int -> left < right
+                        left is Double && right is Double -> left < right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '<': $left e $right")
+                    }
+                    ">=" -> when {
+                        left is Int && right is Int -> left >= right
+                        left is Double && right is Double -> left >= right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '>=': $left e $right")
+                    }
+                    "<=" -> when {
+                        left is Int && right is Int -> left <= right
+                        left is Double && right is Double -> left <= right
+                        else -> throw RuntimeException("Tipos incompatíveis para o operador '<=': $left e $right")
+                    }
                     "==" -> left == right
                     "!=" -> left != right
                     else -> throw RuntimeException("Unknown operator: ${node.operator}")
@@ -221,13 +255,6 @@ class GrubbyInterpreter {
         val nodes = parser.parse()
 
         nodes.forEach { evaluate(it) }
-    }
-
-    private fun parseExpression(expression: String): GrubbyNode {
-        val lexer = GrubbyLexer()
-        val tokens = lexer.tokenize(expression)
-        val parser = GrubbyParser(tokens)
-        return parser.parse().first()
     }
 
     private fun initializeLaterVariable(name: String, value: Any?) {

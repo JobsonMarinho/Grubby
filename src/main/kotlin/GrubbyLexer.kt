@@ -2,7 +2,7 @@ import java.util.regex.Pattern
 
 class GrubbyLexer {
     private val pattern = Pattern.compile(
-        """(?<COMMENT>//[^\r\n]*)|(?<BLOCK>/\*[\s\S]*?\*/)|(?<IMPORT>import)|(?<PRINTLN>println)|(?<VAR>var)|(?<VAL>val)|(?<LATER>later)|(?<FN>fn)|(?<END>end)|(?<FOR>for)|(?<FOREACH>foreach)|(?<WHILE>while)|(?<IN>in)|(?<TO>to)|(?<ARRAY>\[.*?])|(?<STRING>'[^']*'|"[^"]*")|(?<NUMBER>[0-9]+)|(?<OPERATOR>(==|!=|<=|>=|<|>|\+|-|\*|/|:|\(|\)))|(?<EQUALS>=)|(?<IF>if)|(?<THEN>then)|(?<ELSEIF>elseif)|(?<ELSE>else)|(?<IDENTIFIER>[a-zA-Z_][a-zA-Z0-9_]*)|(?<WHITESPACE>[ \t\f\r\n]+)""",
+        """(?<COMMENT>//[^\r\n]*)|(?<BLOCK>/\*[\s\S]*?\*/)|(?<IMPORT>import)|(?<PRINTLN>println)|(?<VAR>var)|(?<VAL>val)|(?<LATER>later)|(?<FN>fn)|(?<END>end)|(?<FOR>for)|(?<FOREACH>foreach)|(?<WHILE>while)|(?<IN> in )|(?<TO>to)|(?<ARRAY>\[.*?])|(?<STRING>'[^']*'|"[^"]*")|(?<DOUBLE>[0-9]+\.[0-9]+)|(?<NUMBER>[0-9]+)|(?<OPERATOR>(==|!=|<=|>=|<|>|\+|-|\*|/|:|\(|\)))|(?<EQUALS>=)|(?<IF>if)|(?<THEN>then)|(?<ELSEIF>elseif)|(?<ELSE>else)|(?<IDENTIFIER>[a-zA-Z_][a-zA-Z0-9_]*)|(?<WHITESPACE>[ \t\f\r\n]+)""",
         Pattern.DOTALL or Pattern.MULTILINE
     )
 
@@ -28,6 +28,7 @@ class GrubbyLexer {
                 matcher.group("TO") != null -> tokens.add(GrubbyToken(GrubbyTokenType.TO, matcher.group("TO")))
                 matcher.group("ARRAY") != null -> tokens.add(GrubbyToken(GrubbyTokenType.ARRAY, matcher.group("ARRAY").trim('[', ']')))
                 matcher.group("STRING") != null -> tokens.add(GrubbyToken(GrubbyTokenType.STRING, matcher.group("STRING").trim('\'')))
+                matcher.group("DOUBLE") != null -> tokens.add(GrubbyToken(GrubbyTokenType.DOUBLE, matcher.group("DOUBLE")))
                 matcher.group("NUMBER") != null -> tokens.add(GrubbyToken(GrubbyTokenType.NUMBER, matcher.group("NUMBER")))
                 matcher.group("IF") != null -> tokens.add(GrubbyToken(GrubbyTokenType.IF, matcher.group("IF")))
                 matcher.group("THEN") != null -> tokens.add(GrubbyToken(GrubbyTokenType.THEN, matcher.group("THEN")))
