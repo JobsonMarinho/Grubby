@@ -17,7 +17,7 @@ Para começar a usar o Grubby, siga os passos abaixo para configurar o ambiente 
 1. **Clone o repositório**
 
     ```bash
-    git clone https://github.com/JobsonMarinho/grubby.git
+    git clone https://github.com/JobsonMarinho/Grubby.git
     ```
 
 2. **Navegue até o diretório do projeto**
@@ -32,18 +32,12 @@ Para começar a usar o Grubby, siga os passos abaixo para configurar o ambiente 
     ./gradlew build
     ```
 
-4. **Execute a linguagem**
-
-    ```bash
-    ./gradlew run
-    ```
-
 ## Uso
 
 Para usar o Grubby para desenvolver plugins de Minecraft, crie um arquivo com a extensão `.gr` e escreva seu código. Em seguida, compile o código com o comando Grubby:
 
 ```bash
-./grubby.jar compile -i "caminho/para/seu/arquivo.gr" -o "caminho/para/salvar/o/arquivo.jar"
+java -jar grubby.jar compile -i "caminho/para/seu/arquivo.gr" -o "caminho/para/salvar/o/arquivo.jar"
 ```
 
 ## Exemplos
