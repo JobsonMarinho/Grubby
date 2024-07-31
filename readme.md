@@ -43,7 +43,7 @@ Para começar a usar o Grubby, siga os passos abaixo para configurar o ambiente 
 Para usar o Grubby para desenvolver plugins de Minecraft, crie um arquivo com a extensão `.gr` e escreva seu código. Em seguida, compile o código com o comando Grubby:
 
 ```bash
-./gradlew compile -i "caminho/para/seu/arquivo.gr" -o "caminho/para/salvar/o/arquivo.jar"
+./grubby.jar compile -i "caminho/para/seu/arquivo.gr" -o "caminho/para/salvar/o/arquivo.jar"
 ```
 
 ## Exemplos
@@ -82,8 +82,8 @@ println sum(x, y) // 30
 
 ## Contribuição
 
-Se você deseja contribuir para o projeto Grubby, sinta-se à vontade para enviar pull requests, abrir issues ou sugerir melhorias. Certifique-se de seguir as diretrizes de contribuição descritas no arquivo `CONTRIBUTING.md`.
+Se você deseja contribuir para o projeto Grubby, sinta-se à vontade para enviar pull requests, abrir issues ou sugerir melhorias. Certifique-se de seguir as diretrizes de contribuição descritas no arquivo [CONTRIBUTING](CONTRIBUTING).
 
 ## Licença
 
-Este projeto está licenciado sob a Licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está licenciado sob a Licença [LICENSE](LICENSE) para mais detalhes.
