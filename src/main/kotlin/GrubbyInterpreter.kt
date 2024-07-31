@@ -31,7 +31,7 @@ class GrubbyInterpreter {
             is GrubbyVarDeclarationNode -> {
                 val value = evaluateExpression(node.expression)
                 variables[node.name] = value
-                variableTypes[node.name] = node.type
+                variableTypes[node.name] = inferType(value)
                 if (node.mutable) {
                     mutableVariables.add(node.name)
                 }
@@ -104,11 +104,17 @@ class GrubbyInterpreter {
             }
             is GrubbyAssignmentNode -> {
                 val value = evaluateExpression(node.expression)
+                val currentType = variableTypes[node.name]
+                val newType = inferType(value)
+
                 if (laterVariables.contains(node.name)) {
                     initializeLaterVariable(node.name, value)
                 } else {
                     if (!mutableVariables.contains(node.name)) {
                         throw RuntimeException("Variável imutável '${node.name}' não pode ser reatribuída")
+                    }
+                    if (currentType != newType) {
+                        throw RuntimeException("Tipo incorreto para a variável '${node.name}'. Esperado: $currentType, mas encontrado: $newType")
                     }
                     variables[node.name] = value
                 }
@@ -126,6 +132,15 @@ class GrubbyInterpreter {
                 null
             }
             else -> throw RuntimeException("Unknown node: $node")
+        }
+    }
+
+    private fun inferType(value: Any?): String {
+        return when (value) {
+            is Int -> "Int"
+            is String -> "String"
+            is List<*> -> "Array"
+            else -> throw RuntimeException("Tipo não reconhecido para o valor: $value")
         }
     }
 
@@ -169,6 +184,7 @@ class GrubbyInterpreter {
                 is GrubbyVarDeclarationNode -> {
                     val value = evaluateExpression(statement.expression, localVariables)
                     localVariables[statement.name] = value
+                    variableTypes[statement.name] = inferType(value)
                     if (statement.mutable) {
                         mutableVariables.add(statement.name)
                     }
@@ -218,6 +234,12 @@ class GrubbyInterpreter {
         if (laterVariables.contains(name)) {
             variables[name] = value
             laterVariables.remove(name)
+            // Verificação de tipo
+            val expectedType = variableTypes[name]
+            val actualType = inferType(value)
+            if (expectedType != actualType) {
+                throw RuntimeException("Tipo incorreto para a variável '$name'. Esperado: $expectedType, mas encontrado: $actualType")
+            }
         } else {
             throw RuntimeException("Variable '$name' was not declared with 'later'.")
         }

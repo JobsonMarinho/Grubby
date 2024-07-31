@@ -1,0 +1,11 @@
+var nome = 'Jobs'
+
+println nome
+
+nome = 1
+
+println nome
+
+nome = 1.5
+
+println nome

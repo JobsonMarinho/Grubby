@@ -42,10 +42,14 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
         consume(GrubbyTokenType.VAR)
         val name = consume(GrubbyTokenType.IDENTIFIER).value
         var type: String? = null
+
         if (match(GrubbyTokenType.OPERATOR) && peek()?.value == ":") {
             consume(GrubbyTokenType.OPERATOR) // Consumindo ':'
             type = consume(GrubbyTokenType.IDENTIFIER).value
+        } else {
+            throw RuntimeException("Tipo obrigatório para variáveis declaradas com 'later'")
         }
+
         return GrubbyLaterDeclarationNode(name, type)
     }
 
@@ -86,12 +90,25 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
         consume(typeToken)
         val name = consume(GrubbyTokenType.IDENTIFIER).value
         var type: String? = null
+
         if (match(GrubbyTokenType.OPERATOR) && peek()?.value == ":") {
             consume(GrubbyTokenType.OPERATOR) // Consumindo ':'
             type = consume(GrubbyTokenType.IDENTIFIER).value
         }
+
         consume(GrubbyTokenType.EQUALS) // Consumindo '='
         val expression = parseExpression()
+
+        // Detecção automática de tipo
+        if (type == null) {
+            type = when (expression) {
+                is GrubbyNumberNode -> "Int"
+                is GrubbyStringNode -> "String"
+                is GrubbyArrayNode -> "Array"
+                else -> throw RuntimeException("Tipo não reconhecido para a expressão: $expression")
+            }
+        }
+
         variableDeclarations[name] = mutable
         return GrubbyVarDeclarationNode(name, expression, mutable, type)
     }
