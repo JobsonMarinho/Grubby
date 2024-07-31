@@ -1,7 +1,9 @@
-later var x: number // later is a keyword that allows you to declare a variable without initializing it
+val x = 2
 
-x = 5 // x is now 5
-
-println x // prints 5
-
-
+if x > 10 then
+  println 'x is greater than 10'
+elseif x >= 3 then
+  println 'x is greater than or equal to 3'
+else
+  println 'x is less than or equal to 10'
+end

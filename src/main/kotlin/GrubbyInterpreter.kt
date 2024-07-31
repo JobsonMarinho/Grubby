@@ -8,6 +8,7 @@ class GrubbyInterpreter {
     private val variableTypes = mutableMapOf<String, String?>()
     private val mutableVariables = mutableSetOf<String>()
     private val laterVariables = mutableSetOf<String>()
+    private val ifElseStack = mutableListOf<Pair<GrubbyIfElseNode, Boolean>>()
 
     fun evaluate(node: GrubbyNode): Any? {
         return when (node) {
@@ -77,6 +78,27 @@ class GrubbyInterpreter {
                 }
                 null
             }
+            is GrubbyIfElseNode -> {
+                val conditionResult = evaluateExpression(node.condition) as Boolean
+                ifElseStack.add(node to conditionResult)
+                if (conditionResult) {
+                    evaluateBlock(node.trueBranch, variables.toMutableMap())
+                } else {
+                    var executed = false
+                    for ((condition, block) in node.elseIfBranches) {
+                        if (evaluateExpression(condition) as Boolean) {
+                            evaluateBlock(block, variables.toMutableMap())
+                            executed = true
+                            break
+                        }
+                    }
+                    if (!executed && node.falseBranch != null) {
+                        evaluateBlock(node.falseBranch!!, variables.toMutableMap())
+                    }
+                }
+                ifElseStack.removeLast()
+                null
+            }
             is GrubbyIdentifierNode -> {
                 variables[node.name] ?: throw RuntimeException("Unknown identifier: ${node.name}")
             }
@@ -89,24 +111,25 @@ class GrubbyInterpreter {
                 }
                 null
             }
+            is GrubbyEndNode -> {
+                if (ifElseStack.isNotEmpty()) {
+                    val (ifElseNode, conditionResult) = ifElseStack.last()
+                    if (conditionResult) {
+                        ifElseNode.falseBranch = null
+                    } else {
+                        ifElseNode.falseBranch = GrubbyBlockNode(ifElseNode.falseBranch?.statements ?: emptyList())
+                    }
+                }
+                null
+            }
             else -> throw RuntimeException("Unknown node: $node")
         }
     }
 
-    private fun evaluateExpression(node: GrubbyNode, localVariables: Map<String, Any?> = variables): Any? {
+    private fun evaluateExpression(node: GrubbyNode, localVariables: Map<String, Any?> = variables): Any {
         return when (node) {
             is GrubbyNumberNode -> node.value
-            is GrubbyStringNode -> {
-                // Handle string interpolation
-                var result = node.value
-                val regex = Regex("""\{([^}]+)\}""")
-                regex.findAll(node.value).forEach { matchResult ->
-                    val expression = matchResult.groupValues[1]
-                    val value = evaluateExpression(parseExpression(expression), localVariables)
-                    result = result.replace(matchResult.value, value.toString())
-                }
-                result
-            }
+            is GrubbyStringNode -> node.value
             is GrubbyIdentifierNode -> {
                 val value = localVariables[node.name] ?: if (laterVariables.contains(node.name)) {
                     throw RuntimeException("Variable '${node.name}' declared with 'later' is not initialized.")
@@ -123,6 +146,12 @@ class GrubbyInterpreter {
                     "-" -> left - right
                     "*" -> left * right
                     "/" -> left / right
+                    ">" -> left > right
+                    "<" -> left < right
+                    ">=" -> left >= right
+                    "<=" -> left <= right
+                    "==" -> left == right
+                    "!=" -> left != right
                     else -> throw RuntimeException("Unknown operator: ${node.operator}")
                 }
             }
@@ -130,6 +159,7 @@ class GrubbyInterpreter {
             else -> throw RuntimeException("Unknown expression: $node")
         }
     }
+
 
     private fun evaluateBlock(block: GrubbyBlockNode, localVariables: MutableMap<String, Any?>) {
         block.statements.forEach { statement ->
@@ -157,7 +187,7 @@ class GrubbyInterpreter {
                     }
                     evaluateBlock(function.body, newLocalVariables)
                 }
-                else -> throw RuntimeException("Unknown statement: $statement")
+                else -> evaluate(statement)
             }
         }
     }

@@ -20,13 +20,20 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
             match(GrubbyTokenType.VAR) -> parseVarDeclaration(mutable = true)
             match(GrubbyTokenType.VAL) -> parseVarDeclaration(mutable = false)
             match(GrubbyTokenType.LATER) -> parseLaterDeclaration()
-            match(GrubbyTokenType.IDENTIFIER) -> parseAssignmentOrExpression()
+            match(GrubbyTokenType.IF) -> parseIfElse()
             match(GrubbyTokenType.FN) -> parseFunction()
             match(GrubbyTokenType.FOR) -> parseFor()
             match(GrubbyTokenType.FOREACH) -> parseForeach()
             match(GrubbyTokenType.WHILE) -> parseWhile()
-            else -> parseExpression()
+            match(GrubbyTokenType.IDENTIFIER) -> parseAssignmentOrExpression()
+            match(GrubbyTokenType.END) -> parseEnd()
+            else -> throw RuntimeException("Erro de sintaxe, token ${peek()} inesperado na posição $position")
         }
+    }
+
+    private fun parseEnd(): GrubbyNode {
+        consume(GrubbyTokenType.END)
+        return GrubbyEndNode
     }
 
     private fun parseLaterDeclaration(): GrubbyNode {
@@ -43,12 +50,13 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
 
     private fun parseAssignmentOrExpression(): GrubbyNode {
         val identifier = consume(GrubbyTokenType.IDENTIFIER).value
-        if (match(GrubbyTokenType.EQUALS)) {
+        return if (match(GrubbyTokenType.EQUALS)) {
             consume(GrubbyTokenType.EQUALS)
             val expression = parseExpression()
-            return GrubbyAssignmentNode(identifier, expression)
+            GrubbyAssignmentNode(identifier, expression)
+        } else {
+            parseExpression(GrubbyIdentifierNode(identifier))
         }
-        return GrubbyIdentifierNode(identifier)
     }
 
     private fun parseImport(): GrubbyNode {
@@ -75,9 +83,30 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
             consume(GrubbyTokenType.OPERATOR) // Consumindo ':'
             type = consume(GrubbyTokenType.IDENTIFIER).value
         }
-        consume(GrubbyTokenType.OPERATOR) // Consumindo '='
+        consume(GrubbyTokenType.EQUALS) // Consumindo '='
         val expression = parseExpression()
         return GrubbyVarDeclarationNode(name, expression, mutable, type)
+    }
+
+    private fun parseIfElse(): GrubbyNode {
+        consume(GrubbyTokenType.IF)
+        val condition = parseExpression()
+        consume(GrubbyTokenType.THEN) // Consumindo 'then'
+        val trueBranch = parseBlock()
+        val elseIfBranches = mutableListOf<Pair<GrubbyNode, GrubbyBlockNode>>()
+        while (match(GrubbyTokenType.ELSEIF)) {
+            consume(GrubbyTokenType.ELSEIF)
+            val elseIfCondition = parseExpression()
+            consume(GrubbyTokenType.THEN) // Consumindo 'then'
+            val elseIfBlock = parseBlock()
+            elseIfBranches.add(elseIfCondition to elseIfBlock)
+        }
+        var falseBranch: GrubbyBlockNode? = null
+        if (match(GrubbyTokenType.ELSE)) {
+            consume(GrubbyTokenType.ELSE)
+            falseBranch = parseBlock()
+        }
+        return GrubbyIfElseNode(condition, trueBranch, elseIfBranches, falseBranch)
     }
 
     private fun parseFunction(): GrubbyNode {
@@ -102,7 +131,7 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
 
     private fun parseBlock(): GrubbyBlockNode {
         val nodes = mutableListOf<GrubbyNode>()
-        while (!match(GrubbyTokenType.END) && position < tokens.size) {
+        while (position < tokens.size && !match(GrubbyTokenType.END) && !match(GrubbyTokenType.ELSE) && !match(GrubbyTokenType.ELSEIF)) {
             if (peek()?.type == GrubbyTokenType.COMMENT || peek()?.type == GrubbyTokenType.BLOCK) {
                 consume(peek()?.type!!) // Ignorar comentários
             } else {
@@ -112,30 +141,31 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
         return GrubbyBlockNode(nodes)
     }
 
-    private fun parseExpression(): GrubbyNode {
-        var left = parseTerm()
-        while (match(GrubbyTokenType.OPERATOR) && (peek()?.value == "+" || peek()?.value == "-")) {
+
+    private fun parseExpression(left: GrubbyNode? = null): GrubbyNode {
+        var node = left ?: parseTerm()
+        while (match(GrubbyTokenType.OPERATOR) && (peek()?.value in listOf("+", "-", ">", "<", ">=", "<=", "==", "!="))) {
             val operator = consume(GrubbyTokenType.OPERATOR).value
             val right = parseTerm()
-            left = GrubbyBinaryOperatorNode(left, operator, right)
+            node = GrubbyBinaryOperatorNode(node, operator, right)
         }
-        return left
+        return node
     }
 
     private fun parseTerm(): GrubbyNode {
-        var left = parseFactor()
+        var node = parseFactor()
         while (match(GrubbyTokenType.OPERATOR) && (peek()?.value == "*" || peek()?.value == "/")) {
             val operator = consume(GrubbyTokenType.OPERATOR).value
             val right = parseFactor()
-            left = GrubbyBinaryOperatorNode(left, operator, right)
+            node = GrubbyBinaryOperatorNode(node, operator, right)
         }
-        return left
+        return node
     }
 
     private fun parseFactor(): GrubbyNode {
         return when {
             match(GrubbyTokenType.NUMBER) -> GrubbyNumberNode(consume(GrubbyTokenType.NUMBER).value.toInt())
-            match(GrubbyTokenType.STRING) -> GrubbyStringNode(consume(GrubbyTokenType.STRING).value)
+            match(GrubbyTokenType.STRING) -> GrubbyStringNode(consume(GrubbyTokenType.STRING).value.trim('\'', '"'))
             match(GrubbyTokenType.IDENTIFIER) -> {
                 val identifier = consume(GrubbyTokenType.IDENTIFIER).value
                 if (match(GrubbyTokenType.OPERATOR) && peek()?.value == "(") {
@@ -160,21 +190,10 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
                 consume(GrubbyTokenType.OPERATOR) // Consumindo ')'
                 expression
             }
-            match(GrubbyTokenType.EQUALS) -> {
-                consume(GrubbyTokenType.EQUALS)  // Consumir o operador '=' corretamente
-                parseFactor()
-            }
-            match(GrubbyTokenType.COMMENT) -> {
-                consume(GrubbyTokenType.COMMENT) // Ignorar comentário de linha
-                parseFactor()
-            }
-            match(GrubbyTokenType.BLOCK) -> {
-                consume(GrubbyTokenType.BLOCK) // Ignorar comentário de bloco
-                parseFactor()
-            }
             else -> throw RuntimeException("Erro de sintaxe, não foi possível identificar o token: ${peek()}")
         }
     }
+
 
     private fun parseArray(): GrubbyNode {
         val arrayContent = consume(GrubbyTokenType.ARRAY).value
@@ -221,9 +240,9 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
     }
 
     private fun consume(type: GrubbyTokenType): GrubbyToken {
-        val token = peek() ?: throw RuntimeException("Token $type esperado, mas encontrado: fim do arquivo")
+        val token = peek() ?: throw RuntimeException("Token $type esperado mas encontrado fim do arquivo")
         if (token.type != type) {
-            throw RuntimeException("Token $type esperado, mas encontrado: $token")
+            throw RuntimeException("Era esperado $type mas foi encontrado $token na posição $position")
         }
         position++
         return token
