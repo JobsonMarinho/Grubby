@@ -2,7 +2,7 @@ import java.util.regex.Pattern
 
 class GrubbyLexer {
     private val pattern = Pattern.compile(
-        """(?<EQUALS>=)|(?<COMMENT>//[^\r\n]*)|(?<BLOCK>/\*[\s\S]*?\*/)|(?<IMPORT>import)|(?<PRINTLN>println)|(?<VAR>var)|(?<VAL>val)|(?<LATER>later)|(?<FN>fn)|(?<END>end)|(?<FOR>for)|(?<FOREACH>foreach)|(?<WHILE>while)|(?<IN>in)|(?<TO>to)|(?<ARRAY>\[.*?])|(?<STRING>'[^']*'|"[^"]*")|(?<NUMBER>[0-9]+)|(?<OPERATOR>(==|!=|<=|>=|<|>|\+|-|\*|/|=|:|\(|\)))|(?<IF>if)|(?<THEN>then)|(?<ELSEIF>elseif)|(?<ELSE>else)|(?<IDENTIFIER>[a-zA-Z_][a-zA-Z0-9_]*)|(?<WHITESPACE>[ \t\f\r\n]+)""",
+        """(?<COMMENT>//[^\r\n]*)|(?<BLOCK>/\*[\s\S]*?\*/)|(?<IMPORT>import)|(?<PRINTLN>println)|(?<VAR>var)|(?<VAL>val)|(?<LATER>later)|(?<FN>fn)|(?<END>end)|(?<FOR>for)|(?<FOREACH>foreach)|(?<WHILE>while)|(?<IN>in)|(?<TO>to)|(?<ARRAY>\[.*?])|(?<STRING>'[^']*'|"[^"]*")|(?<NUMBER>[0-9]+)|(?<OPERATOR>(==|!=|<=|>=|<|>|\+|-|\*|/|:|\(|\)))|(?<EQUALS>=)|(?<IF>if)|(?<THEN>then)|(?<ELSEIF>elseif)|(?<ELSE>else)|(?<IDENTIFIER>[a-zA-Z_][a-zA-Z0-9_]*)|(?<WHITESPACE>[ \t\f\r\n]+)""",
         Pattern.DOTALL or Pattern.MULTILINE
     )
 

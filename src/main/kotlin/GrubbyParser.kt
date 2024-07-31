@@ -93,6 +93,7 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
         val condition = parseExpression()
         consume(GrubbyTokenType.THEN) // Consumindo 'then'
         val trueBranch = parseBlock()
+
         val elseIfBranches = mutableListOf<Pair<GrubbyNode, GrubbyBlockNode>>()
         while (match(GrubbyTokenType.ELSEIF)) {
             consume(GrubbyTokenType.ELSEIF)
@@ -101,11 +102,17 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
             val elseIfBlock = parseBlock()
             elseIfBranches.add(elseIfCondition to elseIfBlock)
         }
+
         var falseBranch: GrubbyBlockNode? = null
         if (match(GrubbyTokenType.ELSE)) {
             consume(GrubbyTokenType.ELSE)
             falseBranch = parseBlock()
         }
+
+        if (match(GrubbyTokenType.END)) {
+            consume(GrubbyTokenType.END)
+        }
+
         return GrubbyIfElseNode(condition, trueBranch, elseIfBranches, falseBranch)
     }
 
@@ -140,7 +147,6 @@ class GrubbyParser(private val tokens: List<GrubbyToken>) {
         }
         return GrubbyBlockNode(nodes)
     }
-
 
     private fun parseExpression(left: GrubbyNode? = null): GrubbyNode {
         var node = left ?: parseTerm()
